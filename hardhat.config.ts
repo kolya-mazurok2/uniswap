@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-chai-matchers';
+import 'dotenv/config';
 
 const RINKEBY_URL = process.env.RINKEBY_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
