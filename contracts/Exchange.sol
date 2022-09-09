@@ -19,7 +19,7 @@ contract Exchange is ERC20 {
   address public factoryAddress;
 
   constructor(address _token) ERC20('Uniswap', 'UNI') {
-    require(_token != address(0), 'Wrong token address');
+    require(_token != address(0), 'E1');
 
     tokenAddress = _token;
     factoryAddress = msg.sender;
@@ -33,7 +33,7 @@ contract Exchange is ERC20 {
       uint256 weiReserve = address(this).balance - msg.value;
       uint256 tokenReserve = getReserve();
       uint256 tokenAmount = (msg.value * tokenReserve) / weiReserve;
-      require(_tokenAmount >= tokenAmount, 'Insufficient token amount');
+      require(_tokenAmount >= tokenAmount, 'E2');
       liquidity = (totalSupply() * msg.value) / weiReserve;
     }
 
@@ -46,7 +46,7 @@ contract Exchange is ERC20 {
   }
 
   function removeLiquidity(uint256 _amount) public returns (uint256, uint256) {
-    require(_amount > 0, 'Insufficient amount');
+    require(_amount > 0, 'E2');
 
     uint256 weiAmount = (address(this).balance * _amount) / totalSupply();
     uint256 tokenAmount = (getReserve() * _amount) / totalSupply();
@@ -63,13 +63,13 @@ contract Exchange is ERC20 {
   }
 
   function getTokenAmount(uint256 _weiAmount) public view returns (uint256) {
-    require(_weiAmount > 0, 'Insufficient wei amount');
+    require(_weiAmount > 0, 'E2');
 
     return getAmount(_weiAmount, address(this).balance, getReserve());
   }
 
   function getWeiAmount(uint256 _tokenAmount) public view returns (uint256) {
-    require(_tokenAmount > 0, 'Insufficient token amount');
+    require(_tokenAmount > 0, 'E2');
 
     return getAmount(_tokenAmount, getReserve(), address(this).balance);
   }
@@ -77,7 +77,7 @@ contract Exchange is ERC20 {
   function tokenToWeiSwap(uint256 _tokensAmount, uint256 _weiRequested) public payable {
     uint256 weiBought = getAmount(_tokensAmount, getReserve(), address(this).balance);
 
-    require(weiBought >= _weiRequested, 'Insufficient received amount');
+    require(weiBought >= _weiRequested, 'E2');
 
     IERC20(tokenAddress).transferFrom(msg.sender, address(this), _tokensAmount);
 
@@ -101,7 +101,7 @@ contract Exchange is ERC20 {
 
     require(
       exchangeAddress != address(this) && exchangeAddress != address(0),
-      'Invalid exchange address'
+      'E1'
     );
 
     uint256 weiBought = getAmount(_tokensSold, getReserve(), address(this).balance);
@@ -114,7 +114,7 @@ contract Exchange is ERC20 {
   function weiToToken(uint256 _tokensRequested, address _recipient) private {
     uint256 tokensBought = getAmount(msg.value, address(this).balance - msg.value, getReserve());
 
-    require(tokensBought >= _tokensRequested, 'Insufficient received amount');
+    require(tokensBought >= _tokensRequested, 'E2');
 
     IERC20(tokenAddress).transfer(_recipient, tokensBought);
   }
@@ -124,7 +124,7 @@ contract Exchange is ERC20 {
     uint256 inputReserve,
     uint256 outputReserve
   ) private pure returns (uint256) {
-    require(inputReserve > 0 && outputReserve > 0, 'Insufficient reserve');
+    require(inputReserve > 0 && outputReserve > 0, 'E2');
 
     uint256 inputAmountWithFee = inputAmount * 997;
 

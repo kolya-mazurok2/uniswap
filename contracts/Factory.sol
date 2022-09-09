@@ -7,8 +7,8 @@ contract Factory {
   mapping(address => address) public tokenToExchange;
 
   function createExchange(address _tokenAddress) public returns (address) {
-    require(_tokenAddress != address(0), 'Invalid token address');
-    require(tokenToExchange[_tokenAddress] == address(0), 'Exchange already exists');
+    require(_tokenAddress != address(0), 'E1');
+    require(tokenToExchange[_tokenAddress] == address(0), 'E3');
 
     Exchange exchange = new Exchange(_tokenAddress);
     tokenToExchange[_tokenAddress] = address(exchange);
