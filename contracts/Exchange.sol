@@ -26,23 +26,26 @@ contract Exchange is ERC20 {
   }
 
   function addLiquidity(uint256 _tokenAmount) public payable returns (uint256) {
-    uint256 liquidity = 0;
     if (getReserve() == 0) {
-      liquidity = address(this).balance;
+      IERC20(tokenAddress).transferFrom(msg.sender, address(this), _tokenAmount);
+
+      uint256 liquidity = address(this).balance;
+      _mint(msg.sender, liquidity);
+
+      return liquidity;
     } else {
       uint256 weiReserve = address(this).balance - msg.value;
       uint256 tokenReserve = getReserve();
       uint256 tokenAmount = (msg.value * tokenReserve) / weiReserve;
       require(_tokenAmount >= tokenAmount, 'E2');
-      liquidity = (totalSupply() * msg.value) / weiReserve;
+
+      IERC20(tokenAddress).transferFrom(msg.sender, address(this), tokenAmount);
+
+      uint256 liquidity = (msg.value * totalSupply()) / weiReserve;
+      _mint(msg.sender, liquidity);
+
+      return liquidity;
     }
-
-    IERC20 token = IERC20(tokenAddress);
-    token.transferFrom(msg.sender, address(this), _tokenAmount);
-
-    _mint(msg.sender, liquidity);
-
-    return liquidity;
   }
 
   function removeLiquidity(uint256 _amount) public returns (uint256, uint256) {
@@ -99,10 +102,7 @@ contract Exchange is ERC20 {
   ) public {
     address exchangeAddress = IFactory(factoryAddress).getExchange(_tokenAddress);
 
-    require(
-      exchangeAddress != address(this) && exchangeAddress != address(0),
-      'E1'
-    );
+    require(exchangeAddress != address(this) && exchangeAddress != address(0), 'E1');
 
     uint256 weiBought = getAmount(_tokensSold, getReserve(), address(this).balance);
 
