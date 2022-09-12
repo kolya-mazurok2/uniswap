@@ -10,13 +10,17 @@ import { IFormValues as ISwapFormValues, SwapForm } from './modules/common/compo
 import Toaster from './modules/common/components/toaster/toaster.component';
 import { TokenERC20Info } from './modules/common/components/token-erc20-info/token-erc20-info.component';
 import { DEFAULT_ERROR, DEFAULT_TRANSACTION_SUCCESS } from './modules/common/consts';
-import { CONTRACT_ADDRESSES } from './modules/common/consts/app-keys.const';
 import useSigner from './modules/contexts/signer';
-import exchangeFactory from './modules/factories/exchange.factory';
+import exchangeFactory from './modules/services/factories/exchange.factory';
 import { useAlertContext } from './modules/hooks/useAlertContext';
 import { primaryTokenService, secondaryTokenService } from './modules/services/erc20-token.service';
-import { IERC20Token, Token, TOKENS, TOKENS_WITH_ETH } from './modules/types';
+import { IERC20Token, TOKENS, TOKENS_WITH_ETH } from './modules/types';
 import { getSolidityErrorMessage } from './modules/utils';
+import { ExchangeContext } from './modules/services/contexts/exchange.context';
+import {
+  ExchangeTokenToTokenStrategy,
+  ExchangeWeiToTokenStrategy
+} from './modules/services/strategies';
 
 const App = () => {
   const { showAlert } = useAlertContext();
@@ -44,25 +48,21 @@ const App = () => {
     }
 
     try {
+      const context = new ExchangeContext();
+
       if (fromToken === 'Wei') {
-        const exchangeService = exchangeFactory.getService(toToken as Token);
-        exchangeService.connect(signer!);
-        await exchangeService.weiToTokenSwap(toAmount, fromAmount);
-      } else if (toToken === 'Wei') {
-        const exchangeService = exchangeFactory.getService(fromToken as Token);
-        exchangeService.connect(signer!);
-        await exchangeService.tokenToWeiSwap(fromAmount, toAmount);
-      } else {
-        const exchangeService = exchangeFactory.getService(fromToken as Token);
-        exchangeService.connect(signer!);
-        await exchangeService.tokenToTokenSwap(
-          fromAmount,
-          toAmount,
-          CONTRACT_ADDRESSES.tokens[toToken]
-        );
+        context.setStrategy(new ExchangeWeiToTokenStrategy());
       }
 
-      showAlert?.('success', DEFAULT_TRANSACTION_SUCCESS);
+      if (toToken === 'Wei') {
+        context.setStrategy(new ExchangeWeiToTokenStrategy());
+      }
+
+      if (fromToken !== 'Wei' && toToken !== 'Wei') {
+        context.setStrategy(new ExchangeTokenToTokenStrategy());
+      }
+
+      context.executeStrategy(fromToken, toToken, fromAmount, toAmount, signer);
     } catch (error) {
       const message = getSolidityErrorMessage(error as Error);
       showAlert?.('error', message);
