@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { SPACES } from '../../../theme';
 
-export const TokenERC20InfoStyled = styled.div`
+export const ExchangeInfoStyled = styled.div`
   & .MuiCardContent-root .MuiTypography-root {
     margin-top: ${SPACES.m};
 

@@ -97,11 +97,11 @@
 			]
 		},
 		"contracts/Exchange.sol": {
-			"keccak256": "0xa29f46359f32c55797780583a91aeeffbade6a57877e0a0a9338d49d672e7691",
+			"keccak256": "0xb2aba379141dc26a84c1d135e0d31cf42b94a1627a47a9e5eac6c69bf8b2c505",
 			"license": "Unlicensed",
 			"urls": [
-				"bzz-raw://47faa3fd7684c022e3946d7fabe9d9193bee44b05075c97be1472366cdd59b8e",
-				"dweb:/ipfs/Qma3EiknNG3czyeP6gjgGoYoTeveNhG4EgpsgxpmdUsqeq"
+				"bzz-raw://bf1dd85bf23090fa21ae870e5319b80c5d50da42b1e5a1f620f9e013a9553c2a",
+				"dweb:/ipfs/QmNkftCyPjzhwqTPtQLVtVQj1Nyx3VfUKSswXTCWayXkZd"
 			]
 		}
 	},

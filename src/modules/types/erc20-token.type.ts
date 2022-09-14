@@ -1,9 +1,9 @@
 import { BigNumber } from 'ethers';
 
-export interface IERC20Token {
+export interface IExchange {
   name: string;
   symbol: string;
-  totalSupply: BigNumber;
+  reserve: BigNumber;
   price: BigNumber;
 }
 

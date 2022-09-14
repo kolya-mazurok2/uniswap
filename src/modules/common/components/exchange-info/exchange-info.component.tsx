@@ -1,6 +1,6 @@
 import { Card, CardContent, Typography } from '@mui/material';
 import { BigNumber } from 'ethers';
-import { TokenERC20InfoStyled } from './token-erc20-info.styled';
+import { ExchangeInfoStyled } from './exchange-info.styled';
 
 interface IProps {
   name: string;
@@ -9,13 +9,15 @@ interface IProps {
   price: BigNumber;
 }
 
-export const TokenERC20Info = ({ name, symbol, totalSupply, price }: IProps) => {
+export const ExchangeInfo = ({ name, symbol, totalSupply, price }: IProps) => {
   return (
-    <TokenERC20InfoStyled>
+    <ExchangeInfoStyled>
       <Card>
         <CardContent>
           <Typography variant="h4">{name}</Typography>
-          <Typography variant="body1">Total: {totalSupply.toNumber()} WEI</Typography>
+          <Typography variant="body1">
+            Total: {totalSupply.toNumber()} {symbol}
+          </Typography>
           {price.toNumber() > 0 ? (
             <Typography variant="body1">
               Current price: {price.toNumber()} WEI per {symbol}
@@ -25,6 +27,6 @@ export const TokenERC20Info = ({ name, symbol, totalSupply, price }: IProps) => 
           )}
         </CardContent>
       </Card>
-    </TokenERC20InfoStyled>
+    </ExchangeInfoStyled>
   );
 };

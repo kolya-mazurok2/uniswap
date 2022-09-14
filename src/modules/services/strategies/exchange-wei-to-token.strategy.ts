@@ -1,18 +1,25 @@
-import { IExchangeStrategy } from '.';
 import { Token, TokenWithWei } from '../../types';
 import exchangeFactory from '../factories/exchange.factory';
-import { JsonRpcSigner } from '@ethersproject/providers';
+import { ExchangeStrategy } from './exchange.strategy';
 
-export class ExchangeWeiToTokenStrategy implements IExchangeStrategy {
-  public async execute(
-    fromToken: TokenWithWei,
-    toToken: TokenWithWei,
-    fromAmount: number,
-    toAmount: number,
-    signer?: JsonRpcSigner
-  ) {
-    const exchangeService = exchangeFactory.getService(toToken as Token);
-    exchangeService.connect(signer!);
-    await exchangeService.weiToTokenSwap(toAmount, fromAmount);
+export class ExchangeWeiToTokenStrategy extends ExchangeStrategy {
+  constructor() {
+    super();
+  }
+
+  protected async getExchangeService(_: TokenWithWei, toToken: TokenWithWei) {
+    return exchangeFactory.getService(toToken as Token);
+  }
+
+  protected async swap(from: number, to: number) {
+    return this.exchangeService?.weiToTokenSwap(from, to);
+  }
+
+  protected async getAmount(inputValue: number) {
+    return this.exchangeService?.getTokenAmount(inputValue);
+  }
+
+  protected async getPriceImpact(inputValue: number): Promise<any> {
+    return this.exchangeService?.calcWeiToTokenPriceImpact(inputValue);
   }
 }

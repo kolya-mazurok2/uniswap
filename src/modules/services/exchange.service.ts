@@ -51,6 +51,34 @@ export class ExchangeService {
     await response.wait();
   }
 
+  public async getTokenAmount(weiAmount: number) {
+    return this.exchangeContract?.getTokenAmount(weiAmount);
+  }
+
+  public async getWeiAmount(tokenAmount: number) {
+    return this.exchangeContract?.getWeiAmount(tokenAmount);
+  }
+
+  public async getUnitPrice() {
+    return this.exchangeContract?.getWeiAmount(1);
+  }
+
+  public async calcTokenToWeiPriceImpact(tokenAmount: number) {
+    const unitPrice = await this.getUnitPrice();
+
+    const weiAmount = await this.getWeiAmount(tokenAmount);
+
+    return 1 - weiAmount.toNumber() / (unitPrice.toNumber() * tokenAmount);
+  }
+
+  public async calcWeiToTokenPriceImpact(weiAmount: number) {
+    const unitPrice = await this.getUnitPrice();
+
+    const tokenAmount = await this.getTokenAmount(weiAmount);
+
+    return 1 - (unitPrice.toNumber() * tokenAmount) / weiAmount;
+  }
+
   private async approveTokenTransfer(amount: number) {
     const approveResponse = await this.tokenContract?.approve(
       CONTRACT_ADDRESSES.exchanges[this.tokenName],

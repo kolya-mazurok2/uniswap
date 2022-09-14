@@ -26,8 +26,11 @@ export const AppStyled = styled.div`
     }
   }
 
-  & .section > div {
-    margin: ${SPACES.l} auto 0;
+  & .section {
+    & > div,
+    h4 {
+      margin: ${SPACES.l} auto 0;
+    }
   }
 
   & form {

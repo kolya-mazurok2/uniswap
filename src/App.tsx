@@ -8,17 +8,21 @@ import {
 } from './modules/common/components/liquidity-form/liquidity-form.component';
 import { IFormValues as ISwapFormValues, SwapForm } from './modules/common/components/swap-form';
 import Toaster from './modules/common/components/toaster/toaster.component';
-import { TokenERC20Info } from './modules/common/components/token-erc20-info/token-erc20-info.component';
+import { ExchangeInfo } from './modules/common/components/exchange-info/exchange-info.component';
 import { DEFAULT_ERROR, DEFAULT_TRANSACTION_SUCCESS } from './modules/common/consts';
 import useSigner from './modules/contexts/signer';
 import exchangeFactory from './modules/services/factories/exchange.factory';
 import { useAlertContext } from './modules/hooks/useAlertContext';
-import { primaryTokenService, secondaryTokenService } from './modules/services/erc20-token.service';
-import { IERC20Token, TOKENS, TOKENS_WITH_ETH } from './modules/types';
+import {
+  primaryExchangeInfoService,
+  secondaryExchangeInfoService
+} from './modules/services/exchange-info.service';
+import { IExchange, TOKENS, TOKENS_WITH_ETH, TokenWithWei } from './modules/types';
 import { getSolidityErrorMessage } from './modules/utils';
 import { ExchangeContext } from './modules/services/contexts/exchange.context';
 import {
   ExchangeTokenToTokenStrategy,
+  ExchangeTokenToWeiStrategy,
   ExchangeWeiToTokenStrategy
 } from './modules/services/strategies';
 
@@ -26,8 +30,12 @@ const App = () => {
   const { showAlert } = useAlertContext();
   const { signer } = useSigner();
 
-  const [primaryToken, setPrimaryToken] = useState<IERC20Token | undefined>();
-  const [secondaryToken, setSecondaryToken] = useState<IERC20Token | undefined>();
+  const [primaryToken, setPrimaryToken] = useState<IExchange | undefined>();
+  const [secondaryToken, setSecondaryToken] = useState<IExchange | undefined>();
+
+  const [swapContext] = useState(new ExchangeContext());
+  const [swapToAmount, setSwapToAmount] = useState(0);
+  const [priceImpact, setPriceImpact] = useState(0);
 
   const handleLiquidityAdded = async ({ amount, price, token }: ILiquidityFormValues) => {
     const exchangeService = exchangeFactory.getService(token);
@@ -42,39 +50,54 @@ const App = () => {
     }
   };
 
+  const handleExchangeValues = (fromToken: TokenWithWei, toToken: TokenWithWei) => {
+    if (fromToken === 'Wei') {
+      swapContext.setStrategy(new ExchangeWeiToTokenStrategy());
+    }
+
+    if (toToken === 'Wei') {
+      swapContext.setStrategy(new ExchangeTokenToWeiStrategy());
+    }
+
+    if (fromToken !== 'Wei' && toToken !== 'Wei') {
+      swapContext.setStrategy(new ExchangeTokenToTokenStrategy());
+    }
+  };
+
   const handleSwap = async ({ fromToken, toToken, fromAmount, toAmount }: ISwapFormValues) => {
     if (fromToken === toToken) {
       return showAlert?.('error', DEFAULT_ERROR);
     }
 
     try {
-      const context = new ExchangeContext();
-
-      if (fromToken === 'Wei') {
-        context.setStrategy(new ExchangeWeiToTokenStrategy());
-      }
-
-      if (toToken === 'Wei') {
-        context.setStrategy(new ExchangeWeiToTokenStrategy());
-      }
-
-      if (fromToken !== 'Wei' && toToken !== 'Wei') {
-        context.setStrategy(new ExchangeTokenToTokenStrategy());
-      }
-
-      context.executeStrategy(fromToken, toToken, fromAmount, toAmount, signer);
+      await swapContext.swap(fromToken, toToken, fromAmount, toAmount, signer!);
+      showAlert?.('success', DEFAULT_TRANSACTION_SUCCESS);
     } catch (error) {
       const message = getSolidityErrorMessage(error as Error);
       showAlert?.('error', message);
     }
   };
 
+  const handleSwapFromAmount = async ({ fromToken, toToken, fromAmount }: ISwapFormValues) => {
+    const newToAmount = await swapContext.getAmount(fromToken, toToken, fromAmount, signer!);
+    setSwapToAmount(newToAmount ? newToAmount.toNumber() : 0);
+
+    const newPriceImpact = await swapContext.getPriceImpact(
+      fromToken,
+      toToken,
+      fromAmount,
+      signer!
+    );
+
+    setPriceImpact(parseFloat((newPriceImpact! * 100).toFixed(3)));
+  };
+
   useEffect(() => {
     (async () => {
-      const primaryToken = await primaryTokenService.getToken();
+      const primaryToken = await primaryExchangeInfoService.getToken();
       setPrimaryToken(primaryToken);
 
-      const secondaryToken = await secondaryTokenService.getToken();
+      const secondaryToken = await secondaryExchangeInfoService.getToken();
       setSecondaryToken(secondaryToken);
     })();
   }, []);
@@ -89,19 +112,19 @@ const App = () => {
             <Typography variant="h2">Tokens info</Typography>
 
             {primaryToken && (
-              <TokenERC20Info
+              <ExchangeInfo
                 name={primaryToken.name}
                 symbol={primaryToken.symbol}
-                totalSupply={primaryToken.totalSupply}
+                totalSupply={primaryToken.reserve}
                 price={primaryToken.price}
               />
             )}
 
             {secondaryToken && (
-              <TokenERC20Info
+              <ExchangeInfo
                 name={secondaryToken.name}
                 symbol={secondaryToken.symbol}
-                totalSupply={secondaryToken.totalSupply}
+                totalSupply={secondaryToken.reserve}
                 price={secondaryToken.price}
               />
             )}
@@ -118,7 +141,17 @@ const App = () => {
               <Box className="section">
                 <Typography variant="h2">Swap</Typography>
 
-                <SwapForm onSubmit={handleSwap} tokens={TOKENS_WITH_ETH} />
+                <Typography variant="h4">
+                  Price Impact: ~{priceImpact ? priceImpact : 0.001} %
+                </Typography>
+
+                <SwapForm
+                  onSubmit={handleSwap}
+                  onFromAmountChange={handleSwapFromAmount}
+                  onExchangeValuesChange={handleExchangeValues}
+                  tokens={TOKENS_WITH_ETH}
+                  inputData={{ toAmount: swapToAmount }}
+                />
               </Box>
             </>
           )}

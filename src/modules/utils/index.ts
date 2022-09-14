@@ -51,3 +51,15 @@ export const getExchangeContract = (tokenName: Token) => {
       return undefined;
   }
 };
+
+export const debounce = (fn: any, timeout = 500) => {
+  let timer: NodeJS.Timeout | undefined;
+
+  return (...args: any) => {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, timeout);
+  };
+};

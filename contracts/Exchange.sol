@@ -111,6 +111,15 @@ contract Exchange is ERC20 {
     IExchange(exchangeAddress).weiToTokenTransfer{value: weiBought}(_tokensBought, msg.sender);
   }
 
+  function getUnitPrice() public view returns (uint256) {
+    uint256 reserve = getReserve();
+    if (reserve == 0) {
+      return 0;
+    }
+
+    return address(this).balance / reserve;
+  }
+
   function weiToToken(uint256 _tokensRequested, address _recipient) private {
     uint256 tokensBought = getAmount(msg.value, address(this).balance - msg.value, getReserve());
 

@@ -5,18 +5,18 @@ import {
   secondaryExchangeContract,
   secondaryTokenContract
 } from '../common/consts';
-import { IERC20Token } from '../types';
+import { IExchange } from '../types';
 
-export class ERC20TokenService {
+export class ExchangeInfoService {
   constructor(private tokenContract: Contract, private exchangeContract: Contract) {}
 
-  public async getToken(): Promise<IERC20Token> {
+  public async getToken(): Promise<IExchange> {
     const name = await this.tokenContract.name();
     const symbol = await this.tokenContract.symbol();
-    const totalSupply = await this.tokenContract.totalSupply();
+    const reserve = await this.exchangeContract.getReserve();
     const price = await this.getPrice();
 
-    return { name, symbol, totalSupply, price };
+    return { name, symbol, reserve, price };
   }
 
   public async getPrice(): Promise<BigNumber> {
@@ -29,12 +29,12 @@ export class ERC20TokenService {
   }
 }
 
-export const primaryTokenService = new ERC20TokenService(
+export const primaryExchangeInfoService = new ExchangeInfoService(
   primaryTokenContract,
   primaryExchangeContract
 );
 
-export const secondaryTokenService = new ERC20TokenService(
+export const secondaryExchangeInfoService = new ExchangeInfoService(
   secondaryTokenContract,
   secondaryExchangeContract
 );
